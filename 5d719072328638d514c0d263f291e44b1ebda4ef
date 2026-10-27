@@ -1,0 +1,47 @@
+{
+ "type": "CLEAR",
+ "commit": "5d719072328638d514c0d263f291e44b1ebda4ef",
+ "caller": "zcode",
+ "when": "20261027-104546",
+ "files": {
+  "analysis/agent_core.py": {
+   "sha": "dd612262d1a94faff369574d231227d0da69779cb85444c10e1aa301935cbde1",
+   "model": "deepseek/deepseek-v4.1-flash-1017@deepinfra/fp8",
+   "verdict": "CLEAR",
+   "when": "20261027-104544",
+   "artifact": ".adversary\\reviews\\gate_20261027-104544.md"
+  },
+  "commands/agent.py": {
+   "sha": "1b2b0ce3c3e1ee6be32f8b4f6102744978a0adc4952f3fc46220c03735162188",
+   "model": "deepseek/deepseek-v4.1-flash-1017@deepinfra/fp8",
+   "verdict": "CLEAR",
+   "when": "20261027-104544",
+   "artifact": ".adversary\\reviews\\gate_20261027-104544.md"
+  },
+  "llm/openai_provider.py": {
+   "sha": "7f703fb4ff9acd5299e32174ae11671ec4be0af98db182380cac84aaaf3e0a73",
+   "model": "deepseek/deepseek-v4.1-flash-1017@deepinfra/fp8",
+   "verdict": "CLEAR",
+   "when": "20261027-104544",
+   "artifact": ".adversary\\reviews\\gate_20261027-104544.md"
+  },
+  "llm/unified_client.py": {
+   "sha": "2d981a20be70b2cd7ea583c65cd80ef2438e6897a9033a91069e1cd37102624a",
+   "model": "deepseek/deepseek-v4.1-flash-1017@deepinfra/fp8",
+   "verdict": "CLEAR",
+   "when": "20261027-104544",
+   "artifact": ".adversary\\reviews\\gate_20261027-104544.md"
+  }
+ },
+ "artifacts": {
+  ".adversary\\reviews\\gate_20261027-104544.md": "model: deepseek/deepseek-v4.1-flash-1017@deepinfra/fp8 | provider: DeepInfra | usage: {'prompt_tokens': 63379, 'completion_tokens': 16900, 'total_tokens': 80279, 'cost': 0.01110673592, 'is_byok': False, 'prompt_tokens_details': {'cached_tokens': 768, 'cache_write_tokens': 0, 'audio_tokens': 0, 'video_tokens': 0}, 'cost_details': {'upstream_inference_cost': 0.01110673592, 'upstream_inference_prompt_cost': 0.00613813592, 'upstream_inference_completions_cost': 0.0049686}, 'completion_tokens_details': {'reasoning_tokens': 16508, 'image_tokens': 0, 'audio_tokens': 0}} | scrubbed: 0 | files: ['analysis/agent_core.py', 'commands/agent.py', 'llm/openai_provider.py', 'llm/unified_client.py'] | prompt: gate/adversary-review@1 (langfuse) | caller: zcode\n\nI reviewed the four staged files and the diff hunk-by-hunk, tracing the changed call sites and reachable paths.\n\nVerification notes:\n- `llm/openai_provider.py` / `llm/unified_client.py`: the new `base_url` and `structured_mode` keyword params have safe defaults, are passed as keywords, and are backward-compatible with the previous `**kwargs`-only construction. The `json_text` branch builds its own messages, validates locally, sets token usage, and sits inside the existing retry loop. No broken caller.\n- `analysis/agent_core.py` `_load_graphs_metadata` fallback: parent-dir glob is correct (`metadata_path` is always `graphs/knowledge_graphs.json`), names/paths are stored consistently, and downstream `_reload_graph`/`_load_graph`/`_load_nodes` all resolve by `available_graphs[name]['path']`, so the derived keys remain usable.\n- `analysis/agent_core.py` AVAILABLE GRAPHS prepend: uses the exact keys from `available_graphs`, guarded by non-empty check; consumed only as the `raw()` system prompt.\n- `commands/agent.py` index creation: uses the already-imported `json` and module-level `console`, guards on `graphs_dir.exists()` and non-empty file list, swallows write failures and falls through to the existing `elif graphs_dir.exists()` path. No double-processing or crash.\n\nI could not construct a concrete input/state within the change's reachable code where the stated impact (crash, wrong result, lost data, broken contract) occurs; the residual edge cases (graph names containing spaces only via the rarely-hit direct-agent fallback, or a pydantic-v1 environment) are not made concretely reachable by this change.\n\nVERDICT: CLEAR"
+ },
+ "artifacts_sha256": {
+  ".adversary\\reviews\\gate_20261027-104544.md": {
+   "embedded": "c52fd35b2be2cdff4a0633714e95cd7ed3e0de5c38780d8e72ebe3b61095573d",
+   "disk": "c52fd35b2be2cdff4a0633714e95cd7ed3e0de5c38780d8e72ebe3b61095573d"
+  }
+ },
+ "mac_key_created": "2026-10-27T00:43:22",
+ "mac": "7a894278a4a5fb31f97e5dfb2ffb7dab7844871d41a1ead45be8703c8dc8f08d"
+}
