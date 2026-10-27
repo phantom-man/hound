@@ -1,0 +1,40 @@
+{
+ "type": "CLEAR",
+ "commit": "937a3146d575afd0c03bb45048d65234a8a702ac",
+ "caller": "zcode",
+ "when": "20261027-110714",
+ "files": {
+  "analysis/graph_builder.py": {
+   "sha": "1b8fb088b1725aefd6b3670cd31402e9a227979d70776628f2436dfef6ee2aef",
+   "model": "deepseek/deepseek-v4.1-flash-1017@deepinfra/fp8",
+   "verdict": "CLEAR",
+   "when": "20261027-110712",
+   "artifact": ".adversary\\reviews\\gate_20261027-110712.md"
+  },
+  "docs/remediation_manifest.json": {
+   "sha": "83c436fe7dabc8354d2f4cc795bcde4632f55b9dff43b463cad14eb9faefed65",
+   "model": "deepseek/deepseek-v4.1-flash-1017@deepinfra/fp8",
+   "verdict": "CLEAR",
+   "when": "20261027-110712",
+   "artifact": ".adversary\\reviews\\gate_20261027-110712.md"
+  },
+  "tests/test_graph_builder_ids.py": {
+   "sha": "bd833cc007d64e520bf3b45e06c64eb8bb748b695c7fd4d846864394dd27584b",
+   "model": "deepseek/deepseek-v4.1-flash-1017@deepinfra/fp8",
+   "verdict": "CLEAR",
+   "when": "20261027-110712",
+   "artifact": ".adversary\\reviews\\gate_20261027-110712.md"
+  }
+ },
+ "artifacts": {
+  ".adversary\\reviews\\gate_20261027-110712.md": "model: deepseek/deepseek-v4.1-flash-1017@deepinfra/fp8 | provider: DeepInfra | usage: {'prompt_tokens': 17324, 'completion_tokens': 18977, 'total_tokens': 36301, 'cost': 0.00720398392, 'is_byok': False, 'prompt_tokens_details': {'cached_tokens': 768, 'cache_write_tokens': 0, 'audio_tokens': 0, 'video_tokens': 0}, 'cost_details': {'upstream_inference_cost': 0.00720398392, 'upstream_inference_prompt_cost': 0.00162474592, 'upstream_inference_completions_cost': 0.005579238}, 'completion_tokens_details': {'reasoning_tokens': 18424, 'image_tokens': 0, 'audio_tokens': 0}} | scrubbed: 0 | files: ['analysis/graph_builder.py', 'docs/remediation_manifest.json', 'tests/test_graph_builder_ids.py'] | prompt: gate/adversary-review@1 (langfuse) | caller: zcode\n\nI reviewed the staged change against the provided bytes and could not refute it.\n\nVerification performed:\n\n- **Import swap is consistent.** `hashlib` is removed and has no remaining call sites in the full file (the only `sha256`/`hashlib` text left is prose in the new docstring). `uuid` is added and used exactly once, in `_generate_id`. `time` remains imported and is still used (`start_time`, `duration`, `created_at`, `timestamp`), so no import was orphaned or dropped incorrectly.\n- **Call sites intact.** `_generate_id` is invoked only at `id=self._generate_id(\"edge\")` in `_apply_update`; node IDs come from `node_spec.id`, so the changed generator has a single, unchanged caller and no signature change.\n- **Fix is sound at realistic scale.** `uuid.uuid4().hex[:12]` is 48 bits; birthday collision probability is negligible for the 120- and 1000-draw loops in the tests (~10\u207b\u00b9\u00b2 and ~10\u207b\u2079), so the new `self.edges[edge.id] = edge` assignments no longer overwrite distinct-triple edges.\n- **Tests exercise real code paths.** `GraphBuilder.__new__` bypasses `__init__` (avoiding the live `LLMClient`), `_generate_id` is stateless, and `test_distinct_edges_all_survive_apply_scale` uses strictly distinct `(src, dst, type)` triples so `add_edge`'s duplicate-triple check cannot short-circuit the count; both assertions (`len(set(ids)) == 1000`, `len(kg.edges) == 120`) hold with the new implementation.\n- **Manifest is internally consistent.** The causal chain it states (id collisions overwrite `self.edges[edge.id]` while `add_edge` still returns `True`) matches the actual code, and its empirical \"2 distinct per 1000 on this machine\" claim is explicitly machine-scoped, so I could not demonstrate it is false from the provided bytes (it is a coarse-clock phenomenon; fine-clock systems would instead pass the old code, but that is a test-efficacy nuance scoped to the author's stated environment, not a reachable defect this change introduces).\n- No `.colibri_reviews/_manifest.json` row is present in this change, so the repo-doctrine row-shape rules are not implicated.\n\nNo logic error, broken caller, unhandled path, or contract break introduced by this diff survives checking.\n\nVERDICT: CLEAR"
+ },
+ "artifacts_sha256": {
+  ".adversary\\reviews\\gate_20261027-110712.md": {
+   "embedded": "fd6c75172637a5a99de1b291cb5180f1dc57caa8c67db07a3791bebc3de7ed1f",
+   "disk": "fd6c75172637a5a99de1b291cb5180f1dc57caa8c67db07a3791bebc3de7ed1f"
+  }
+ },
+ "mac_key_created": "2026-10-27T00:43:22",
+ "mac": "68b41260d90500f4351c0e34f20cc35c1ef84fee36cf3f9edf670d3242f54063"
+}
