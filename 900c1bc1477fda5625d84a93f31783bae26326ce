@@ -1,0 +1,33 @@
+{
+ "type": "CLEAR",
+ "commit": "900c1bc1477fda5625d84a93f31783bae26326ce",
+ "caller": "zcode",
+ "when": "20261027-154541",
+ "files": {
+  "analysis/graph_builder.py": {
+   "sha": "94ee4be680898b5db7a86419d05ba7ad072b5682635a9fbc91df8e6ea7702f8a",
+   "model": "deepseek/deepseek-v4.1-flash-1017@deepinfra/fp8",
+   "verdict": "CLEAR",
+   "when": "20261027-154539",
+   "artifact": ".adversary\\reviews\\gate_20261027-154539.md"
+  },
+  "tests/test_graph_builder_ids.py": {
+   "sha": "b0b6633b5c0343303fad86fd764e7e44625afb7164defdc4a80d6e2e2ac1e24b",
+   "model": "deepseek/deepseek-v4.1-flash-1017@deepinfra/fp8",
+   "verdict": "CLEAR",
+   "when": "20261027-154539",
+   "artifact": ".adversary\\reviews\\gate_20261027-154539.md"
+  }
+ },
+ "artifacts": {
+  ".adversary\\reviews\\gate_20261027-154539.md": "model: deepseek/deepseek-v4.1-flash-1017@deepinfra/fp8 | provider: DeepInfra | usage: {'prompt_tokens': 16422, 'completion_tokens': 5573, 'total_tokens': 21995, 'cost': 0.00317481192, 'is_byok': False, 'prompt_tokens_details': {'cached_tokens': 768, 'cache_write_tokens': 0, 'audio_tokens': 0, 'video_tokens': 0}, 'cost_details': {'upstream_inference_cost': 0.00317481192, 'upstream_inference_prompt_cost': 0.00153634992, 'upstream_inference_completions_cost': 0.001638462}, 'completion_tokens_details': {'reasoning_tokens': 5168, 'image_tokens': 0, 'audio_tokens': 0}} | scrubbed: 0 | files: ['analysis/graph_builder.py', 'tests/test_graph_builder_ids.py'] | prompt: gate/adversary-review@1 (langfuse) | caller: zcode\n\nI reviewed the staged change against the provided bytes of both files.\n\n**What the change does:** `_generate_id` now returns `f\"{prefix}_{uuid.uuid4().hex[:12]}\"` instead of hashing `str(time.time())`. `import hashlib` is removed; `import uuid` is added.\n\n**Verification performed:**\n- `hashlib` has no remaining references anywhere in the full staged `analysis/graph_builder.py`, so removing the import cannot raise `NameError`. `uuid` is used exactly where imported.\n- `_generate_id` has a single call site (`_apply_update`, `id=self._generate_id(\"edge\")`). No code parses the id format or depends on the old 8-char length; ids are only used as dict keys (`self.edges[edge.id]`), and `_load_existing_graphs` reads ids straight from JSON.\n- The replacement is strictly stronger than the prior 32-bit clock-hash: `uuid4` uses `os.urandom`, and 48 bits gives negligible collision probability at realistic graph sizes (birthday bound ~N\u00b2/2\u2074\u2079; e.g. N=10\u2074 \u2192 ~2e-7).\n- `add_edge` dedups by `(source_id, target_id, type)`; the test's 120 triples `fn_i -> fn_{i+1}` are all distinct, so `add_edge` correctly returns `True` for each and 120 edges survive under the new id scheme.\n- `_bare_builder` uses `__new__` and `_generate_id` touches no instance state, so the test is valid without constructing an `LLMClient`.\n\nNo call-site breakage, no contract break, no unhandled path, and no runtime defect is introduced by this change. The new tests assert behavior that the new implementation satisfies.\n\nVERDICT: CLEAR"
+ },
+ "artifacts_sha256": {
+  ".adversary\\reviews\\gate_20261027-154539.md": {
+   "embedded": "37995c438bb90c7301b920a5609b3f8b05cbfd8de9428737f8cde2ce054ebb61",
+   "disk": "37995c438bb90c7301b920a5609b3f8b05cbfd8de9428737f8cde2ce054ebb61"
+  }
+ },
+ "mac_key_created": "2026-10-27T00:43:22",
+ "mac": "477aeb1b728d04333ce2dfa2e36193e06b93623f0891699f619692f524cfe793"
+}
